@@ -8,7 +8,7 @@ import pino from 'pino';
 import * as path from 'path';
 import qrcode from 'qrcode-terminal';
 
-const VERCEL_API_URL = process.env.VERCEL_API_URL || 'http://localhost:3000/api/whatsapp';
+const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://catatan-keuangan-pribadi-theta.vercel.app/api/whatsapp';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'dev_secret_key_123';
 const AUTH_DIR = path.resolve(process.env.AUTH_DIR || './auth_state');
 
