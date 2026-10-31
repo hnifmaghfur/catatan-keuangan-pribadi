@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MobileContainer } from '@/components/layout/mobile-container';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { SummaryCard } from '@/components/dashboard/summary-card';
@@ -8,14 +8,18 @@ import { DailyEstimateCard } from '@/components/dashboard/daily-estimate-card';
 import { RecentTransactions } from '@/components/dashboard/recent-transactions';
 import { QuickAddModal } from '@/components/transactions/quick-add-modal';
 import { WhatsAppGuideModal } from '@/components/whatsapp/whatsapp-guide-modal';
+import { AuthModal } from '@/components/auth/auth-modal';
+import { useAuth } from '@/context/auth-context';
 import { BudgetSummary, Category, Transaction, User } from '@/types';
-import { Bell, RefreshCw, Smartphone, TrendingUp, Settings2, Trash2 } from 'lucide-react';
+import { RefreshCw, User as UserIcon, LogOut, LogIn, Trash2 } from 'lucide-react';
 import { formatDateIndo, formatRupiah } from '@/lib/utils';
 
 export default function HomePage() {
+  const { phone, profile, authUser, signOut } = useAuth();
+
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'budget' | 'whatsapp'>('home');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const [summary, setSummary] = useState<BudgetSummary | null>(null);
@@ -29,13 +33,15 @@ export default function HomePage() {
   const [savingBudget, setSavingBudget] = useState(false);
   const [budgetSuccessMsg, setBudgetSuccessMsg] = useState('');
 
-  const fetchData = async () => {
+  const currentPhone = phone || '6281234567890';
+
+  const fetchData = useCallback(async () => {
     try {
       setRefreshing(true);
       const [sumRes, txRes, budgetRes] = await Promise.all([
-        fetch('/api/summary'),
-        fetch('/api/transactions?limit=30'),
-        fetch('/api/budget'),
+        fetch(`/api/summary?phone=${encodeURIComponent(currentPhone)}`),
+        fetch(`/api/transactions?phone=${encodeURIComponent(currentPhone)}&limit=30`),
+        fetch(`/api/budget?phone=${encodeURIComponent(currentPhone)}`),
       ]);
 
       if (sumRes.ok) {
@@ -60,14 +66,13 @@ export default function HomePage() {
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [currentPhone]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +83,7 @@ export default function HomePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          phone: currentPhone,
           monthly_budget: parseFloat(newBudgetInput) || 0,
           budget_start_day: parseInt(startDayInput, 10) || 1,
         }),
@@ -134,7 +140,7 @@ export default function HomePage() {
               Catatan Keuangan
             </h1>
             <p className="text-[10px] text-slate-400">
-              {user?.phone_number ? `+${user.phone_number}` : 'Mode Mobile First'}
+              {phone ? `+${phone}` : 'Demo User'}
             </p>
           </div>
         </div>
@@ -148,6 +154,36 @@ export default function HomePage() {
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
           </button>
+
+          {phone || authUser ? (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="flex items-center gap-1 p-1.5 px-2.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                title="Kelola Akun"
+              >
+                <UserIcon className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="max-w-[70px] truncate">
+                  {profile?.name || (phone ? `+${phone.slice(-4)}` : 'Akun')}
+                </span>
+              </button>
+              <button
+                onClick={signOut}
+                className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                title="Keluar"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-1.5 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-transform active:scale-95"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Masuk</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -181,7 +217,7 @@ export default function HomePage() {
                 </div>
               </div>
               <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">
-                Lihat Format →
+                Buka Bot →
               </span>
             </div>
 
@@ -343,6 +379,13 @@ export default function HomePage() {
         onClose={() => setIsAddModalOpen(false)}
         categories={categories}
         onSuccess={fetchData}
+        phone={currentPhone}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
 
       {/* Mobile Bottom Navigation */}

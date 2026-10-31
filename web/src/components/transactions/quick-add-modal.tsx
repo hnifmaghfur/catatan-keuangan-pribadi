@@ -9,6 +9,7 @@ interface QuickAddModalProps {
   onClose: () => void;
   categories: Category[];
   onSuccess: () => void;
+  phone?: string;
 }
 
 export function QuickAddModal({
@@ -16,6 +17,7 @@ export function QuickAddModal({
   onClose,
   categories,
   onSuccess,
+  phone = '6281234567890',
 }: QuickAddModalProps) {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -42,6 +44,7 @@ export function QuickAddModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          phone,
           amount: parseFloat(amount),
           description,
           category_id: categoryId || null,
