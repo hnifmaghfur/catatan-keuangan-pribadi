@@ -2,6 +2,7 @@ import makeWASocket, {
   DisconnectReason,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
+  Browsers,
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import * as path from 'path';
@@ -46,6 +47,10 @@ async function startBot() {
     version,
     auth: state,
     logger: pino({ level: 'error' }),
+    browser: Browsers.ubuntu('Chrome'),
+    connectTimeoutMs: 60000,
+    defaultQueryTimeoutMs: 0,
+    keepAliveIntervalMs: 10000,
   });
 
   sock.ev.on('creds.update', saveCreds);
