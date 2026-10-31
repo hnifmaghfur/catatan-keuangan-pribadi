@@ -58,7 +58,7 @@ export function BottomNav({ activeTab, onTabChange, onOpenAddModal }: BottomNavP
         }`}
       >
         <MessageCircle className="w-5 h-5" />
-        <span className="text-[11px]">WhatsApp</span>
+        <span className="text-[11px]">Bot Chat</span>
       </button>
     </nav>
   );

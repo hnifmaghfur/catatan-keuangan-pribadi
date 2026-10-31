@@ -8,6 +8,7 @@ import { DailyEstimateCard } from '@/components/dashboard/daily-estimate-card';
 import { RecentTransactions } from '@/components/dashboard/recent-transactions';
 import { QuickAddModal } from '@/components/transactions/quick-add-modal';
 import { WhatsAppGuideModal } from '@/components/whatsapp/whatsapp-guide-modal';
+import { TelegramGuideModal } from '@/components/telegram/telegram-guide-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { useAuth } from '@/context/auth-context';
 import { BudgetSummary, Category, Transaction, User } from '@/types';
@@ -18,6 +19,7 @@ export default function HomePage() {
   const { phone, profile, authUser, signOut } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'budget' | 'whatsapp'>('home');
+  const [botPlatform, setBotPlatform] = useState<'whatsapp' | 'telegram'>('telegram');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -198,25 +200,25 @@ export default function HomePage() {
             {/* Daily Estimation Card: Core requested feature */}
             <DailyEstimateCard summary={currentSummary} />
 
-            {/* WhatsApp Integration Shortcut Card */}
+            {/* Bot Integration Shortcut Card */}
             <div
               onClick={() => setActiveTab('whatsapp')}
-              className="bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 rounded-2xl p-3.5 flex items-center justify-between cursor-pointer transition-colors"
+              className="bg-gradient-to-r from-sky-50 to-emerald-50 hover:from-sky-100 hover:to-emerald-100 border border-emerald-200/60 rounded-2xl p-3.5 flex items-center justify-between cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm shadow-sm">
-                  💬
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-500 text-white flex items-center justify-center text-sm shadow-sm">
+                  🤖
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-emerald-950">
-                    Bisa Catat & Cek Langsung dari WhatsApp
+                  <h4 className="text-xs font-bold text-slate-800">
+                    Bisa Catat & Cek via Telegram / WhatsApp
                   </h4>
-                  <p className="text-[10px] text-emerald-700">
+                  <p className="text-[10px] text-slate-500">
                     Ketik &quot;hari ini&quot;, &quot;budget&quot;, atau &quot;25k bakso #makan&quot;
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">
+              <span className="text-xs font-semibold text-sky-700 bg-white/80 px-2.5 py-1 rounded-lg border border-sky-200 shadow-xs">
                 Buka Bot →
               </span>
             </div>
@@ -365,10 +367,34 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* TAB 4: WHATSAPP GUIDE */}
+        {/* TAB 4: BOT CHAT GUIDE (WHATSAPP & TELEGRAM) */}
         {activeTab === 'whatsapp' && (
-          <div className="animate-in fade-in duration-200">
-            <WhatsAppGuideModal />
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {/* Platform Segmented Switcher */}
+            <div className="flex bg-slate-200/80 p-1 rounded-2xl shadow-inner">
+              <button
+                onClick={() => setBotPlatform('telegram')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  botPlatform === 'telegram'
+                    ? 'bg-white text-sky-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                <span>✈️</span> Telegram (Serverless)
+              </button>
+              <button
+                onClick={() => setBotPlatform('whatsapp')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  botPlatform === 'whatsapp'
+                    ? 'bg-white text-emerald-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                <span>💬</span> WhatsApp Bot
+              </button>
+            </div>
+
+            {botPlatform === 'telegram' ? <TelegramGuideModal /> : <WhatsAppGuideModal />}
           </div>
         )}
       </div>
