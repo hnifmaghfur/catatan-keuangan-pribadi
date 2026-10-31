@@ -34,3 +34,6 @@ auth_state/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+*.txt
+*.pass
