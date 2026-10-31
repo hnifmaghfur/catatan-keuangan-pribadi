@@ -1,0 +1,18 @@
+app = "catatan-keuangan-wa-bot"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[mounts]
+  source = "wa_auth_data"
+  destination = "/app/auth_state"
+
+[env]
+  NODE_ENV = "production"
+  AUTH_DIR = "/app/auth_state"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpus = 1
