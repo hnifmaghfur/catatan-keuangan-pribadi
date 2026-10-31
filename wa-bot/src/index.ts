@@ -11,6 +11,29 @@ const VERCEL_API_URL = process.env.VERCEL_API_URL || 'http://localhost:3000/api/
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'dev_secret_key_123';
 const AUTH_DIR = path.resolve(process.env.AUTH_DIR || './auth_state');
 
+async function reportStatusToWeb(payload: {
+  qr?: string | null;
+  status: string;
+  connectedPhone?: string | null;
+}) {
+  try {
+    const baseUrl = VERCEL_API_URL.replace(/\/api\/whatsapp\/?$/, '');
+    const qrEndpoint = `${baseUrl}/api/whatsapp/qr`;
+    console.log(`[Bot] Syncing status to Web (${payload.status}) -> ${qrEndpoint}`);
+
+    await fetch(qrEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Webhook-Secret': WEBHOOK_SECRET,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error('[Bot] Failed to sync status to Web API:', err);
+  }
+}
+
 async function startBot() {
   console.log(`[Bot] Initializing WhatsApp Bot with auth dir: ${AUTH_DIR}`);
   console.log(`[Bot] Webhook target: ${VERCEL_API_URL}`);
@@ -27,19 +50,30 @@ async function startBot() {
 
   sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
       console.log('\n================ QR CODE WHATSAPP ================');
       qrcode.generate(qr, { small: true });
       console.log('Scan QR code di atas menggunakan aplikasi WhatsApp (Linked Devices)\n');
+
+      // Sync QR to Website
+      await reportStatusToWeb({
+        qr,
+        status: 'scan_needed',
+      });
     }
 
     if (connection === 'close') {
       const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
       console.warn(`[Bot] Connection closed. Reason code: ${statusCode}. Reconnecting: ${shouldReconnect}`);
+
+      await reportStatusToWeb({
+        status: 'disconnected',
+        qr: null,
+      });
 
       if (shouldReconnect) {
         setTimeout(() => {
@@ -50,6 +84,17 @@ async function startBot() {
       }
     } else if (connection === 'open') {
       console.log('✅ [Bot] WhatsApp connected successfully!');
+
+      const phone = sock.user?.id
+        ? sock.user.id.replace(/:.+@/, '@').replace(/@.+/, '')
+        : null;
+
+      // Sync connected status to Website
+      await reportStatusToWeb({
+        status: 'connected',
+        qr: null,
+        connectedPhone: phone,
+      });
     }
   });
 
@@ -61,7 +106,6 @@ async function startBot() {
 
       const remoteJid = msg.key.remoteJid;
       if (!remoteJid || remoteJid.endsWith('@g.us')) {
-        // Skip group messages if personal finance app is direct message only
         continue;
       }
 
