@@ -5,6 +5,7 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import * as path from 'path';
+import qrcode from 'qrcode-terminal';
 
 const VERCEL_API_URL = process.env.VERCEL_API_URL || 'http://localhost:3000/api/whatsapp';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'dev_secret_key_123';
@@ -22,7 +23,6 @@ async function startBot() {
     version,
     auth: state,
     logger: pino({ level: 'error' }),
-    printQRInTerminal: true,
   });
 
   sock.ev.on('creds.update', saveCreds);
@@ -31,7 +31,9 @@ async function startBot() {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log('[Bot] Scan QR code above to connect WhatsApp.');
+      console.log('\n================ QR CODE WHATSAPP ================');
+      qrcode.generate(qr, { small: true });
+      console.log('Scan QR code di atas menggunakan aplikasi WhatsApp (Linked Devices)\n');
     }
 
     if (connection === 'close') {
